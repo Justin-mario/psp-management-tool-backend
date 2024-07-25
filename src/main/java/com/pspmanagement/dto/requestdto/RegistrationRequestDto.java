@@ -1,16 +1,16 @@
 package com.pspmanagement.dto.requestdto;
 
-import com.pspmanagement.model.constant.UserRole;
-import com.pspmanagement.model.entity.User;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Set;
+
 @Getter
 @Setter
-public class AdminRegistrationRequestDto {
+public class RegistrationRequestDto {
     private Long id;
     @NotBlank(message = "User name is required")
     private String username;
@@ -19,20 +19,19 @@ public class AdminRegistrationRequestDto {
     private String email;
     @Size(min = 8, message = "Password must be at least 8 characters long")
     private String password;
-    private UserRole role;
+    private Set<String> roles;
     @NotBlank(message = "Company name is required")
     private String companyName;
 
 
-
     @Override
     public String toString() {
-        return "AdminRegistrationRequestDto{" +
+        return "RegistrationRequestDto{" +
                 "id=" + id +
-                ", userName='" + username + '\'' +
+                ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
-                ", role=" + role +
+                ", roles=" + roles +
                 ", companyName='" + companyName + '\'' +
                 '}';
     }

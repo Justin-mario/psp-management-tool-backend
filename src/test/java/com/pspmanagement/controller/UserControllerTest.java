@@ -1,8 +1,8 @@
 package com.pspmanagement.controller;//package com.pspmanagement.controller;
 //
 //import com.fasterxml.jackson.databind.ObjectMapper;
-//import com.pspmanagement.dto.requestdto.AdminRegistrationRequestDto;
-//import com.pspmanagement.dto.responsedto.AdminRegistrationResponseDto;
+//import com.pspmanagement.dto.requestdto.RegistrationRequestDto;
+//import com.pspmanagement.dto.responsedto.RegistrationResponseDto;
 //import com.pspmanagement.model.constant.UserRole;
 //import com.pspmanagement.service.UserService;
 //import org.junit.jupiter.api.Test;
@@ -32,7 +32,7 @@ package com.pspmanagement.controller;//package com.pspmanagement.controller;
 //
 //    @Test
 //    public void testCreateAdmin() throws Exception {
-//        AdminRegistrationRequestDto requestDto = new AdminRegistrationRequestDto();
+//        RegistrationRequestDto requestDto = new RegistrationRequestDto();
 //        requestDto.setId(1L);
 //        requestDto.setUsername("newuser");
 //        requestDto.setEmail("newuser@example.com");
@@ -40,14 +40,14 @@ package com.pspmanagement.controller;//package com.pspmanagement.controller;
 //        requestDto.setRole(UserRole.ADMIN);
 //        requestDto.setCompanyName("Acme Inc.");
 //
-//        AdminRegistrationResponseDto responseDto = new AdminRegistrationResponseDto();
+//        RegistrationResponseDto responseDto = new RegistrationResponseDto();
 //        responseDto.setId(1L);
 //        responseDto.setUsername("newuser");
 //        responseDto.setEmail("newuser@example.com");
 //        responseDto.setRole(UserRole.ADMIN);
 //        responseDto.setCompanyName("Acme Inc.");
 //
-//        when(userService.registerAsAdmin(any(AdminRegistrationRequestDto.class))).thenReturn(responseDto);
+//        when(userService.registerAsAdmin(any(RegistrationRequestDto.class))).thenReturn(responseDto);
 //
 //        mockMvc.perform(post("/api/v1/psp-management-tool/user")
 //                        .contentType(MediaType.APPLICATION_JSON)
@@ -57,15 +57,13 @@ package com.pspmanagement.controller;//package com.pspmanagement.controller;
 //                .andExpect((ResultMatcher) jsonPath("$.username").value("newuser"))
 //                .andExpect((ResultMatcher) jsonPath("$.email").value("newuser@example.com"));
 //
-//        verify(userService).registerAsAdmin(any(AdminRegistrationRequestDto.class));
+//        verify(userService).registerAsAdmin(any(RegistrationRequestDto.class));
 //    }
 //}
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pspmanagement.controller.UserController;
-import com.pspmanagement.dto.requestdto.AdminRegistrationRequestDto;
-import com.pspmanagement.dto.responsedto.AdminRegistrationResponseDto;
-import com.pspmanagement.model.constant.UserRole;
+import com.pspmanagement.dto.requestdto.RegistrationRequestDto;
+import com.pspmanagement.dto.responsedto.RegistrationResponseDto;
 import com.pspmanagement.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -77,6 +75,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
+
+import java.util.Collections;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
@@ -98,6 +98,9 @@ class UserControllerTest {
     @Autowired
     private WebApplicationContext webApplicationContext;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @BeforeEach
     public void setup() {
         mockMvc = MockMvcBuilders
@@ -109,31 +112,31 @@ class UserControllerTest {
     @Test
     @WithMockUser(username = "admin", roles = {"ADMIN"})
     public void testCreateAdmin() throws Exception {
-        AdminRegistrationRequestDto requestDto = new AdminRegistrationRequestDto();
+        RegistrationRequestDto requestDto = new RegistrationRequestDto();
         requestDto.setId(1L);
-        requestDto.setUsername("newuser");
+        requestDto.setUsername("admin");
         requestDto.setEmail("newuser@example.com");
         requestDto.setPassword("password123");
-        requestDto.setRole(UserRole.ADMIN);
+        requestDto.setRoles(Collections.singleton("ADMIN"));
         requestDto.setCompanyName("Acme Inc.");
 
-        AdminRegistrationResponseDto responseDto = new AdminRegistrationResponseDto();
+        RegistrationResponseDto responseDto = new RegistrationResponseDto();
         responseDto.setId(1L);
-        responseDto.setUsername("newuser");
+        responseDto.setUsername("admin");
         responseDto.setEmail("newuser@example.com");
-        responseDto.setRole(UserRole.ADMIN);
+        responseDto.setRoles(Collections.singleton("ADMIN"));
         responseDto.setCompanyName("Acme Inc.");
 
-        when(userService.registerAsAdmin(any(AdminRegistrationRequestDto.class))).thenReturn(responseDto);
+        when(userService.registerAsAdmin(any(RegistrationRequestDto.class))).thenReturn(responseDto);
 
-        mockMvc.perform(post("/api/v1/psp-management-tool/user")
+        mockMvc.perform(post("/api/v1/psp-management-tool/user/register-admin")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(new ObjectMapper().writeValueAsString(requestDto)))
+                        .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.username").value("newuser"))
+                .andExpect(jsonPath("$.username").value("admin"))
                 .andExpect(jsonPath("$.email").value("newuser@example.com"));
 
-        verify(userService).registerAsAdmin(any(AdminRegistrationRequestDto.class));
+        verify(userService).registerAsAdmin(any(RegistrationRequestDto.class));
     }
 }

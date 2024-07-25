@@ -1,8 +1,7 @@
 package com.pspmanagement.service;
 
-import com.pspmanagement.dto.requestdto.AdminRegistrationRequestDto;
-import com.pspmanagement.dto.responsedto.AdminRegistrationResponseDto;
-import com.pspmanagement.model.constant.UserRole;
+import com.pspmanagement.dto.requestdto.RegistrationRequestDto;
+import com.pspmanagement.dto.responsedto.RegistrationResponseDto;
 import com.pspmanagement.model.entity.User;
 import com.pspmanagement.repository.UserRepository;
 import org.junit.jupiter.api.Test;
@@ -11,6 +10,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
+
+import java.util.Collections;
+
 import static org.mockito.ArgumentMatchers.any;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -29,13 +31,13 @@ class UserServiceImplTest {
 
     @Test
     public void testCreateAdmin() {
-        AdminRegistrationRequestDto requestDto = new AdminRegistrationRequestDto();
+        RegistrationRequestDto requestDto = new RegistrationRequestDto();
         requestDto.setId(1L);
         requestDto.setUsername("John");
         requestDto.setPassword("password");
         requestDto.setEmail("john@example.com");
         requestDto.setCompanyName("UH");
-        requestDto.setRole(UserRole.ADMIN);
+        requestDto.setRoles(Collections.singleton("ADMIN"));
 
         User savedUser = new User();
         savedUser.setId(1L);
@@ -43,12 +45,12 @@ class UserServiceImplTest {
         savedUser.setPassword("encodedPassword");
         savedUser.setEmail("john@example.com");
         savedUser.setCompanyName("UH");
-        savedUser.setRole(UserRole.ADMIN);
+        savedUser.setRoles(Collections.singleton("ADMIN"));
 
         when(passwordEncoder.encode(anyString())).thenReturn("encodedPassword");
         when(userRepository.save(any(User.class))).thenReturn(savedUser);
 
-        AdminRegistrationResponseDto responseDto = userService.registerAsAdmin(requestDto);
+        RegistrationResponseDto responseDto = userService.registerAsAdmin(requestDto);
 
         assertNotNull(responseDto);
         assertEquals(1L, responseDto.getId());

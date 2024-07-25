@@ -1,17 +1,22 @@
 package com.pspmanagement.config;
+
 import io.jsonwebtoken.*;
+import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import java.security.Key;
 import java.util.Date;
+
 @Component
 public class JwtTokenProvider {
-    @Value("${app.jwtSecret}")
-    private String jwtSecret;
 
     @Value("${app.jwtExpirationInMs}")
     private int jwtExpirationInMs;
+
+    private final Key key = Keys.secretKeyFor(SignatureAlgorithm.HS512); // Generate a secure key
 
     public String generateToken(Authentication authentication) {
         UserDetailsImpl userPrincipal = (UserDetailsImpl) authentication.getPrincipal();
@@ -21,15 +26,16 @@ public class JwtTokenProvider {
 
         return Jwts.builder()
                 .setSubject(userPrincipal.getUsername())
-                .setIssuedAt(new Date())
+                .setIssuedAt(now)
                 .setExpiration(expiryDate)
-                .signWith(SignatureAlgorithm.HS512, jwtSecret)
+                .signWith(key)
                 .compact();
     }
 
     public String getUsernameFromJWT(String token) {
-        Claims claims = Jwts.parser()
-                .setSigningKey(jwtSecret)
+        Claims claims = Jwts.parserBuilder()
+                .setSigningKey(key)
+                .build()
                 .parseClaimsJws(token)
                 .getBody();
 
@@ -38,18 +44,21 @@ public class JwtTokenProvider {
 
     public boolean validateToken(String authToken) {
         try {
-            Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(authToken);
+            Jwts.parserBuilder()
+                    .setSigningKey(key)
+                    .build()
+                    .parseClaimsJws(authToken);
             return true;
         } catch (SignatureException ex) {
-            // Log error message
+            // Log error message: Invalid JWT signature
         } catch (MalformedJwtException ex) {
-            // Log error message
+            // Log error message: Invalid JWT token
         } catch (ExpiredJwtException ex) {
-            // Log error message
+            // Log error message: Expired JWT token
         } catch (UnsupportedJwtException ex) {
-            // Log error message
+            // Log error message: Unsupported JWT token
         } catch (IllegalArgumentException ex) {
-            // Log error message
+            // Log error message: JWT claims string is empty
         }
         return false;
     }

@@ -1,7 +1,6 @@
 package com.pspmanagement.controller;
-import com.pspmanagement.dto.requestdto.AdminRegistrationRequestDto;
+import com.pspmanagement.dto.requestdto.RegistrationRequestDto;
 import com.pspmanagement.dto.requestdto.LoginRequest;
-import com.pspmanagement.dto.responsedto.AdminRegistrationResponseDto;
 import com.pspmanagement.dto.responsedto.LoginResponse;
 import com.pspmanagement.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +14,7 @@ public class AuthController {
     private UserService userService;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@RequestBody AdminRegistrationRequestDto signUpRequest) {
+    public ResponseEntity<?> registerUser(@RequestBody RegistrationRequestDto signUpRequest) {
         userService.registerAsAdmin(signUpRequest);
         return ResponseEntity.ok("User registered successfully");
     }
