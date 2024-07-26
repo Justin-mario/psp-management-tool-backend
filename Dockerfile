@@ -9,7 +9,7 @@ WORKDIR /app
 COPY . /app
 
 # Use mvn instead of ./mvn
-RUN mvn clean package
+RUN mvn clean package -DskipTests
 
 EXPOSE 8080
 

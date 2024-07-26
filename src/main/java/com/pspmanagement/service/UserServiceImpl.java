@@ -6,6 +6,8 @@ import com.pspmanagement.dto.requestdto.RegistrationRequestDto;
 import com.pspmanagement.dto.requestdto.LoginRequest;
 import com.pspmanagement.dto.responsedto.RegistrationResponseDto;
 import com.pspmanagement.dto.responsedto.LoginResponse;
+import com.pspmanagement.exception.ConflictException;
+import com.pspmanagement.exception.ResourceExistException;
 import com.pspmanagement.model.entity.User;
 import com.pspmanagement.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -34,8 +36,12 @@ public class UserServiceImpl implements UserService{
     }
     @Override
     public RegistrationResponseDto registerAsAdmin(RegistrationRequestDto requestDto) {
-        if(userRepository.existsByCompanyName(requestDto.getCompanyName()) ){
-            throw new RuntimeException("This company has an admin!");
+        if(userRepository.existsByCompanyName(requestDto.getCompanyName())){
+            User user = userRepository.findByCompanyName(requestDto.getCompanyName());
+            String adminRole = user.getRoles().stream().filter(role -> role.equals("ADMIN")).toString();
+            if(adminRole != null){
+                throw new ResourceExistException(requestDto.getCompanyName() + " has an admin!");
+            }
         }
         return getRegistrationResponseDto(requestDto);
     }
@@ -47,10 +53,10 @@ public class UserServiceImpl implements UserService{
 
     private RegistrationResponseDto getRegistrationResponseDto(RegistrationRequestDto requestDto) {
         if (userRepository.existsByUsername(requestDto.getUsername())) {
-            throw new RuntimeException("Username is already taken!");
+            throw new ConflictException(requestDto.getUsername() + " is already taken!");
         }
         if (userRepository.existsByEmail(requestDto.getEmail())) {
-            throw new RuntimeException("This email has been registered!");
+            throw new ConflictException(requestDto.getEmail() + " has been registered!");
         }
         User user = new User();
         user .setUsername(requestDto.getUsername());
