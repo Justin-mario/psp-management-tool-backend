@@ -2,12 +2,12 @@ package com.pspmanagement.service;
 
 import com.pspmanagement.config.JwtTokenProvider;
 import com.pspmanagement.config.UserDetailsImpl;
+import com.pspmanagement.dto.requestdto.ChangePasswordRequest;
 import com.pspmanagement.dto.requestdto.RegistrationRequestDto;
 import com.pspmanagement.dto.requestdto.LoginRequest;
 import com.pspmanagement.dto.responsedto.RegistrationResponseDto;
 import com.pspmanagement.dto.responsedto.LoginResponse;
-import com.pspmanagement.exception.ConflictException;
-import com.pspmanagement.exception.ResourceExistException;
+import com.pspmanagement.exception.*;
 import com.pspmanagement.model.entity.User;
 import com.pspmanagement.repository.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -36,20 +36,47 @@ public class UserServiceImpl implements UserService{
     }
     @Override
     public RegistrationResponseDto registerAsAdmin(RegistrationRequestDto requestDto) {
-        if(userRepository.existsByCompanyName(requestDto.getCompanyName())){
-            User user = userRepository.findByCompanyName(requestDto.getCompanyName());
-            String adminRole = user.getRoles().stream().filter(role -> role.equals("ADMIN")).toString();
-            if(adminRole != null){
-                throw new ResourceExistException(requestDto.getCompanyName() + " has an admin!");
+        if (userRepository.existsByCompanyName(requestDto.getCompanyName())) {
+            User existingUser = userRepository.findByCompanyName(requestDto.getCompanyName());
+            if (existingUser != null && existingUser.getRoles().contains("ADMIN")) {
+                throw new ResourceExistException(requestDto.getCompanyName() + " already has an admin!");
             }
         }
         return getRegistrationResponseDto(requestDto);
     }
 
+
     @Override
-    public RegistrationResponseDto registerDeveloper(RegistrationRequestDto requestDto) {
+    public RegistrationResponseDto registerDeveloper(RegistrationRequestDto requestDto, String jwtToken) {
+        // check if admin already exist
+//        User existingUser = userRepository.findByCompanyName(requestDto.getCompanyName());
+//        if (existingUser != null && existingUser.getRoles().contains("ADMIN") && requestDto.getRoles().contains("ADMIN")) {
+//            throw new ResourceExistException(requestDto.getCompanyName() + " already has an admin!");
+//        }
+        // Validate the JWT token
+        if (!tokenProvider.validateToken(jwtToken)) {
+            throw new UnauthorizedException("Invalid or expired token");
+        }
+
+        // Extract the admin's username from the token
+        String adminUsername = tokenProvider.getUsernameFromJWT(jwtToken);
+
+        // Verify if the admin exists and has the right role
+        User admin = userRepository.findByUsername(adminUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
+
+        if (!admin.getRoles().contains("ADMIN")) {
+            throw new UnauthorizedException("Only admins can create developer accounts");
+        }
+
+        // Check if the company of the admin matches the company in the request
+        if (!admin.getCompanyName().equals(requestDto.getCompanyName())) {
+            throw new ForbiddenException("Admin can only create developers for their own company");
+        }
+
         return getRegistrationResponseDto(requestDto);
     }
+
 
     private RegistrationResponseDto getRegistrationResponseDto(RegistrationRequestDto requestDto) {
         if (userRepository.existsByUsername(requestDto.getUsername())) {
@@ -69,6 +96,15 @@ public class UserServiceImpl implements UserService{
         return new RegistrationResponseDto(userRepository.save(user ));
     }
 
+    @Override
+    public String changePassword(Long userId, ChangePasswordRequest changePasswordRequest) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BadRequestException("User not found"));
+
+        user.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
+        userRepository.save(user);
+        return "Password changed successfully";
+    }
 
     public LoginResponse authenticateUser(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
