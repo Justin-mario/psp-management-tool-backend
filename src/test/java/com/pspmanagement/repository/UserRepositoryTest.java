@@ -27,7 +27,7 @@ class UserRepositoryTest {
         requestDto.setPassword("password");
         requestDto.setEmail("john@example.com");
         requestDto.setCompanyName("UH");
-        requestDto.setRoles(Collections.singleton("ADMIN"));
+//        requestDto.setRoles(Collections.singleton("ADMIN"));
 
         User user = new User(requestDto);
 
@@ -45,7 +45,7 @@ class UserRepositoryTest {
         requestDto.setPassword("password");
         requestDto.setEmail("john@example.com");
         requestDto.setCompanyName("UH");
-        requestDto.setRoles(Collections.singleton("ADMIN"));
+//        requestDto.setRoles(Collections.singleton("ADMIN"));
 
         User user = new User(requestDto);
         userRepository.save(user);

@@ -18,6 +18,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -36,93 +37,134 @@ public class UserServiceImpl implements UserService{
     }
     @Override
     public RegistrationResponseDto registerAsAdmin(RegistrationRequestDto requestDto) {
-        if (userRepository.existsByCompanyName(requestDto.getCompanyName())) {
-            User existingUser = userRepository.findByCompanyName(requestDto.getCompanyName());
-            if (existingUser != null && existingUser.getRoles().contains("ADMIN")) {
-                throw new ResourceExistException(requestDto.getCompanyName() + " already has an admin!");
+        try {
+            if (userRepository.existsByCompanyName(requestDto.getCompanyName())) {
+                User existingUser = userRepository.findByCompanyName(requestDto.getCompanyName());
+                if (existingUser != null && existingUser.getRoles().contains("ADMIN")) {
+                    throw new ResourceExistException(requestDto.getCompanyName() + " already has an admin!");
+                }
             }
+            validateRegistration(requestDto);
+
+            User admin = new User();
+            admin .setUsername(requestDto.getUsername());
+            admin .setEmail(requestDto.getEmail());
+            String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
+            admin .setPassword(encodedPassword);
+            admin .setRoles(Collections.singleton("ADMIN"));
+            admin .setCompanyName(requestDto.getCompanyName());
+            admin.setPspLevel(0);
+            User user = userRepository.save(admin );
+            // Create UserDetailsImpl instance
+            UserDetailsImpl userDetails = new UserDetailsImpl(admin);
+            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities());
+            String jwt = tokenProvider.generateToken(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            return new RegistrationResponseDto(jwt,user);
         }
-        return getRegistrationResponseDto(requestDto);
+        catch (ResourceExistException e) {
+            throw new ResourceExistException(e.getMessage());
+        }
+
+
     }
 
 
     @Override
     public RegistrationResponseDto registerDeveloper(RegistrationRequestDto requestDto, String jwtToken) {
-        // check if admin already exist
-//        User existingUser = userRepository.findByCompanyName(requestDto.getCompanyName());
-//        if (existingUser != null && existingUser.getRoles().contains("ADMIN") && requestDto.getRoles().contains("ADMIN")) {
-//            throw new ResourceExistException(requestDto.getCompanyName() + " already has an admin!");
-//        }
-        // Validate the JWT token
-        if (!tokenProvider.validateToken(jwtToken)) {
-            throw new UnauthorizedException("Invalid or expired token");
+        try {
+            // Validate the JWT token
+            if (!tokenProvider.validateToken(jwtToken)) {
+                throw new UnauthorizedException("Invalid or expired token");
+            }
+            // Extract the admin's username from the token
+            String adminUsername = tokenProvider.getUsernameFromJWT(jwtToken);
+            // Verify if the admin exists and has the right role
+            User admin = userRepository.findByUsername(adminUsername)
+                    .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
+            if (!admin.getRoles().contains("ADMIN")) {
+                throw new UnauthorizedException("Only admins can create developer accounts");
+            }
+            // Check if the company of the admin matches the company in the request
+            if (!admin.getCompanyName().equals(requestDto.getCompanyName())) {
+                throw new ForbiddenException("Admin can only create developers for their own company");
+            }
+            validateRegistration(requestDto);
+            User developer = new User();
+            developer .setUsername(requestDto.getUsername());
+            developer .setEmail(requestDto.getEmail());
+            String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
+            developer .setPassword(encodedPassword);
+            developer .setRoles(Collections.singleton("DEVELOPER"));
+            developer .setCompanyName(admin.getCompanyName());
+            developer.setPspLevel(0);
+            return new RegistrationResponseDto(userRepository.save(developer ));
+        }
+        catch (UnauthorizedException e) {
+            throw new UnauthorizedException(e.getMessage());
+        }
+        catch (ForbiddenException e) {
+            throw new ForbiddenException(e.getMessage());
         }
 
-        // Extract the admin's username from the token
-        String adminUsername = tokenProvider.getUsernameFromJWT(jwtToken);
-
-        // Verify if the admin exists and has the right role
-        User admin = userRepository.findByUsername(adminUsername)
-                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
-
-        if (!admin.getRoles().contains("ADMIN")) {
-            throw new UnauthorizedException("Only admins can create developer accounts");
-        }
-
-        // Check if the company of the admin matches the company in the request
-        if (!admin.getCompanyName().equals(requestDto.getCompanyName())) {
-            throw new ForbiddenException("Admin can only create developers for their own company");
-        }
-
-        return getRegistrationResponseDto(requestDto);
     }
 
 
-    private RegistrationResponseDto getRegistrationResponseDto(RegistrationRequestDto requestDto) {
-        if (userRepository.existsByUsername(requestDto.getUsername())) {
-            throw new ConflictException(requestDto.getUsername() + " is already taken!");
+    private void validateRegistration(RegistrationRequestDto requestDto) {
+        try {
+            if (userRepository.existsByUsername(requestDto.getUsername())) {
+                throw new ConflictException(requestDto.getUsername() + " is already taken!");
+            }
+            if (userRepository.existsByEmail(requestDto.getEmail())) {
+                throw new ConflictException(requestDto.getEmail() + " has been registered!");
+            }
         }
-        if (userRepository.existsByEmail(requestDto.getEmail())) {
-            throw new ConflictException(requestDto.getEmail() + " has been registered!");
+        catch (ConflictException e) {
+            throw new ConflictException(e.getMessage());
         }
-        User user = new User();
-        user .setUsername(requestDto.getUsername());
-        user .setEmail(requestDto.getEmail());
-        String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
-        user .setPassword(encodedPassword);
-        user .setRoles(requestDto.getRoles());
-        user .setCompanyName(requestDto.getCompanyName());
 
-        return new RegistrationResponseDto(userRepository.save(user ));
+
     }
 
     @Override
     public String changePassword(Long userId, ChangePasswordRequest changePasswordRequest) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new BadRequestException("User not found"));
+        try {
+            User user = userRepository.findById(userId)
+                    .orElseThrow(() -> new BadRequestException("User not found"));
 
-        user.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
-        userRepository.save(user);
-        return "Password changed successfully";
+            user.setPassword(passwordEncoder.encode(changePasswordRequest.getNewPassword()));
+            userRepository.save(user);
+            return "Password changed successfully";
+        } catch (BadRequestException e) {
+            throw new BadRequestException(e.getMessage());
+        }
+
     }
 
     public LoginResponse authenticateUser(LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getUsername(),
-                        loginRequest.getPassword()
-                )
-        );
+        try{
+            Authentication authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            loginRequest.getUsername(),
+                            loginRequest.getPassword()
+                    )
+            );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String jwt = tokenProvider.generateToken(authentication);
-        UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+            String jwt = tokenProvider.generateToken(authentication);
+            UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
 
-        Set<String> roles = userDetails.getAuthorities().stream()
-                .map(GrantedAuthority::getAuthority)
-                .collect(Collectors.toSet());
+            Set<String> roles = userDetails.getAuthorities().stream()
+                    .map(GrantedAuthority::getAuthority)
+                    .collect(Collectors.toSet());
 
-        return new LoginResponse(jwt, userDetails.getUsername(), roles);
+            return new LoginResponse(jwt, userDetails.getUsername(), roles);
+        }
+        catch (Exception e) {
+            throw new UnauthorizedException("Invalid username or password");
+        }
+
     }
 }
