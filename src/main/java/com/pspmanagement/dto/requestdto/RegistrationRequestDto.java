@@ -19,7 +19,7 @@ public class RegistrationRequestDto {
     private String email;
     @Size(min = 8, message = "Password must be at least 8 characters long")
     private String password;
-    private Set<String> roles;
+
     @NotBlank(message = "Company name is required")
     private String companyName;
 
@@ -31,7 +31,6 @@ public class RegistrationRequestDto {
                 ", username='" + username + '\'' +
                 ", email='" + email + '\'' +
                 ", password='" + password + '\'' +
-                ", roles=" + roles +
                 ", companyName='" + companyName + '\'' +
                 '}';
     }

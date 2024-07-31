@@ -17,13 +17,26 @@ public class RegistrationResponseDto {
     private String email;
     private Set<String> roles;
     private String companyName;
+    private int pspLevel;
+    private String token;
 
-    public RegistrationResponseDto(User admin) {
-        id = admin.getId();
-        username = admin.getUsername();
-        email = admin.getEmail();
-        roles = admin.getRoles();
-        companyName = admin.getCompanyName();
+    public RegistrationResponseDto(User user) {
+        id = user.getId();
+        username = user.getUsername();
+        email = user.getEmail();
+        roles = user.getRoles();
+        companyName = user.getCompanyName();
+        pspLevel = user.getPspLevel();
+    }
+
+    public RegistrationResponseDto(String jwt, User user) {
+        id = user.getId();
+        username = user.getUsername();
+        email = user.getEmail();
+        roles = user.getRoles();
+        companyName = user.getCompanyName();
+        pspLevel = user.getPspLevel();
+        token = jwt;
     }
 
     @Override
@@ -34,6 +47,8 @@ public class RegistrationResponseDto {
                 ", email='" + email + '\'' +
                 ", roles=" + roles +
                 ", companyName='" + companyName + '\'' +
+                ", pspLevel=" + pspLevel +
+                ", token='" + token + '\'' +
                 '}';
     }
 }

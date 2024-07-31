@@ -6,6 +6,7 @@ import com.pspmanagement.dto.requestdto.LoginRequest;
 import com.pspmanagement.dto.responsedto.RegistrationResponseDto;
 import com.pspmanagement.dto.responsedto.LoginResponse;
 import com.pspmanagement.service.UserService;
+import com.pspmanagement.util.Util;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -16,10 +17,11 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/psp-management-tool/user")
 public class UserController {
     private final UserService userService;
-
+    private final Util util;
     @Autowired
-    public UserController(UserService userService) {
+    public UserController(UserService userService, Util util) {
         this.userService = userService;
+        this.util = util;
     }
 
     @PostMapping("/register-admin")
@@ -32,7 +34,7 @@ public class UserController {
             @Valid @RequestBody RegistrationRequestDto requestDto,
             @RequestHeader("Authorization") String authHeader) {
         // Extract the JWT token from the Authorization header
-        String jwtToken = extractJwtToken(authHeader);
+        String jwtToken = util.extractJwtToken(authHeader);
         return new ResponseEntity<>(userService.registerDeveloper(requestDto, jwtToken), HttpStatus.CREATED);
     }
 
@@ -43,17 +45,9 @@ public class UserController {
     }
 
     @PutMapping("/change-password/{id}")
-    public ResponseEntity<String> changePassword(@PathVariable Long id, @RequestBody ChangePasswordRequest changePasswordRequest) {
+    public ResponseEntity<String> changePassword(@PathVariable Long id, @Valid @RequestBody ChangePasswordRequest changePasswordRequest) {
         userService.changePassword(id, changePasswordRequest);
         return new ResponseEntity<>("Password changed successfully", HttpStatus.OK);
     }
 
-    private String extractJwtToken(String authHeader) {
-        // Check if the header starts with "Bearer "
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            // Extract the token (remove "Bearer " prefix)
-            return authHeader.substring(7);
-        }
-        throw new IllegalArgumentException("Invalid Authorization header");
-    }
 }

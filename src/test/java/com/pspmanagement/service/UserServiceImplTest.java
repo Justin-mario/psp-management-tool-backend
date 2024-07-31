@@ -50,7 +50,7 @@ class UserServiceImplTest {
         requestDto.setPassword("password");
         requestDto.setEmail("john@example.com");
         requestDto.setCompanyName("UH");
-        requestDto.setRoles(Collections.singleton("ADMIN"));
+//        requestDto.setRoles(Collections.singleton("ADMIN"));
 
         savedUser = new User();
         savedUser.setId(1L);
@@ -119,7 +119,7 @@ class UserServiceImplTest {
         requestDto2.setPassword("password");
         requestDto2.setEmail("peter@example.com");
         requestDto2.setCompanyName("UH");
-        requestDto2.setRoles(Collections.singleton("ADMIN"));
+//        requestDto2.setRoles(Collections.singleton("ADMIN"));
 
         assertThrows(ResourceExistException.class, () -> userService.registerAsAdmin(requestDto2));
 
@@ -152,7 +152,7 @@ class UserServiceImplTest {
         requestDto.setUsername("Peter");
         requestDto.setEmail("peter@example.com");
         requestDto.setCompanyName("UH");
-        requestDto.setRoles(Collections.singleton("DEVELOPER"));
+//        requestDto.setRoles(Collections.singleton("DEVELOPER"));
 
         // Execute the method
         RegistrationResponseDto responseDto = userService.registerDeveloper(requestDto, adminJwt);
@@ -204,7 +204,7 @@ class UserServiceImplTest {
         requestDto.setUsername("Peter");
         requestDto.setEmail("peter@example.com");
         requestDto.setCompanyName("UH");
-        requestDto.setRoles(Collections.singleton("DEVELOPER"));
+//        requestDto.setRoles(Collections.singleton("DEVELOPER"));
 
         assertThrows(UnauthorizedException.class, () -> userService.registerDeveloper(requestDto, adminJwt));
 
