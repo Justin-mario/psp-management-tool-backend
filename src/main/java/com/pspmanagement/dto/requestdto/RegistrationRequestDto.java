@@ -20,7 +20,6 @@ public class RegistrationRequestDto {
     @Size(min = 8, message = "Password must be at least 8 characters long")
     private String password;
 
-    @NotBlank(message = "Company name is required")
     private String companyName;
 
 

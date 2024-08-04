@@ -52,6 +52,9 @@ public class UserServiceImpl implements UserService{
             String encodedPassword = passwordEncoder.encode(requestDto.getPassword());
             admin .setPassword(encodedPassword);
             admin .setRoles(Collections.singleton("ADMIN"));
+            if(requestDto.getCompanyName()==null){
+                throw new BadRequestException("Company name is required");
+            }
             admin .setCompanyName(requestDto.getCompanyName());
             admin.setPspLevel(0);
             User user = userRepository.save(admin );
@@ -86,10 +89,7 @@ public class UserServiceImpl implements UserService{
             if (!admin.getRoles().contains("ADMIN")) {
                 throw new UnauthorizedException("Only admins can create developer accounts");
             }
-            // Check if the company of the admin matches the company in the request
-            if (!admin.getCompanyName().equals(requestDto.getCompanyName())) {
-                throw new ForbiddenException("Admin can only create developers for their own company");
-            }
+
             validateRegistration(requestDto);
             User developer = new User();
             developer .setUsername(requestDto.getUsername());
@@ -159,8 +159,9 @@ public class UserServiceImpl implements UserService{
             Set<String> roles = userDetails.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toSet());
-
-            return new LoginResponse(jwt, userDetails.getUsername(), roles);
+            User user = userRepository.findByUsername(userDetails.getUsername()).get();
+//            RegistrationResponseDto user = new RegistrationResponseDto();
+            return new LoginResponse(jwt, new RegistrationResponseDto(user), roles);
         }
         catch (Exception e) {
             throw new UnauthorizedException("Invalid username or password");
