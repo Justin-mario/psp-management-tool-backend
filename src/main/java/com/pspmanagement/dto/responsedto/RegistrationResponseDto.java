@@ -15,9 +15,9 @@ public class RegistrationResponseDto {
     private Long id;
     private String username;
     private String email;
-    private Set<String> roles;
     private String companyName;
     private int pspLevel;
+    private Set<String> roles;
     private String token;
 
     public RegistrationResponseDto(User user) {
