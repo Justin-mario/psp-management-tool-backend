@@ -1,5 +1,6 @@
 package com.pspmanagement.dto.requestdto;
 
+import com.pspmanagement.model.constant.ProjectPhase;
 import com.pspmanagement.model.constant.ProjectStatus;
 import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
@@ -29,6 +30,7 @@ public class ProjectRegistrationRequestDto {
 
     private ProjectStatus projectStatus;
 
+    private ProjectPhase projectPhase;
 
 
 }

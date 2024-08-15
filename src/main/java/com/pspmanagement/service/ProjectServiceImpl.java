@@ -13,6 +13,7 @@ import com.pspmanagement.model.entity.Project;
 import com.pspmanagement.model.entity.User;
 import com.pspmanagement.repository.ProjectRepository;
 import com.pspmanagement.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -49,6 +50,7 @@ public class ProjectServiceImpl implements ProjectService{
             project.setProjectDescription(projectRegistrationRequestDto.getProjectDescription());
             project.setProjectStatus(ProjectStatus.IN_PROGRESS);
             project.setStartDate(LocalDateTime.now());
+            project.setProjecPhase(projectRegistrationRequestDto.getProjectPhase());
             projectRepository.save(project);
 
         return new ProjectResponseDto(project);
@@ -59,6 +61,7 @@ public class ProjectServiceImpl implements ProjectService{
         }
 
     @Override
+    @Transactional
     public String reassignProject(Long projectId, ProjectRegistrationRequestDto requestDto, String jwtToken) {
         try{
             // Validate the JWT token
@@ -89,6 +92,7 @@ public class ProjectServiceImpl implements ProjectService{
     }
 
     @Override
+    @Transactional
     public Map<String, String> completeProject(Long projectId) {
         try{
             Project project = projectRepository.findById(projectId).orElseThrow(() -> new ResourceNotFoundException("Project not found"));
@@ -106,6 +110,7 @@ public class ProjectServiceImpl implements ProjectService{
     }
 
     @Override
+    @Transactional
     public Map<String, String> archiveProject(Long projectId) {
         try{
             Project project = projectRepository.findById(projectId).orElseThrow(() -> new ResourceNotFoundException("Project not found"));
@@ -122,6 +127,7 @@ public class ProjectServiceImpl implements ProjectService{
     }
 
     @Override
+    @Transactional
     public List<ProjectResponseDto> getAllProjectsByDeveloper(ProjectRequestDto requestDto) {
         try {
             List<Project> foundProjects = projectRepository.findAllByProjectDeveloper_Username(requestDto.getProjectDeveloper());
@@ -133,6 +139,7 @@ public class ProjectServiceImpl implements ProjectService{
     }
 
     @Override
+    @Transactional
     public List<ProjectResponseDto> getAllProjectsByAdmin(String jwtToken) {
         try {
             String adminName = tokenProvider.getUsernameFromJWT(jwtToken);
@@ -149,6 +156,7 @@ public class ProjectServiceImpl implements ProjectService{
     }
 
     @Override
+    @Transactional
     public List<ProjectResponseDto> getAllProjectsByStatus(ProjectRequestDto requestDto) {
         try {
             ProjectStatus status = ProjectStatus.valueOf(requestDto.getProjectStatus());
@@ -162,6 +170,7 @@ public class ProjectServiceImpl implements ProjectService{
     }
 
     @Override
+    @Transactional
     public List<ProjectResponseDto> getAllProjectsByCompany(String jwtToken) {
         try {
             String adminName = tokenProvider.getUsernameFromJWT(jwtToken);
@@ -175,6 +184,11 @@ public class ProjectServiceImpl implements ProjectService{
             throw new ResourceNotFoundException(e.getMessage());
         }
     }
+
+
+
+
+
 
 
     private User findAdminById(Long adminId) {

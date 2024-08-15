@@ -1,13 +1,10 @@
 package com.pspmanagement.dto.responsedto;
 
+import com.pspmanagement.model.constant.ProjectPhase;
 import com.pspmanagement.model.constant.ProjectStatus;
 import com.pspmanagement.model.entity.Project;
-import com.pspmanagement.model.entity.User;
-import jakarta.validation.constraints.NotBlank;
 import lombok.Getter;
 import lombok.Setter;
-
-import java.util.List;
 
 @Getter
 @Setter
@@ -30,6 +27,10 @@ public class ProjectResponseDto {
 
     private String projectAdmin;
 
+    private ProjectPhase phase;
+
+    private String duration;
+
 
 
     public ProjectResponseDto(Project project) {
@@ -42,6 +43,8 @@ public class ProjectResponseDto {
         this.startDate = String.valueOf(project.getStartDate());
         this.endDate = String.valueOf(project.getEndDate());
         this.projectAdmin = project.getProjectAdmin().getUsername();
+        this.phase = project.getProjecPhase();
+        this.duration = project.calculateDuration();
     }
 
     @Override
@@ -56,6 +59,8 @@ public class ProjectResponseDto {
                 ", startDate='" + startDate + '\'' +
                 ", endDate='" + endDate + '\'' +
                 ", projectAdmin='" + projectAdmin + '\'' +
+                ", projecPhase=" + phase +
+                ", duration=" + duration +
                 '}';
     }
 }

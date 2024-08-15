@@ -50,4 +50,10 @@ public class UserController {
         return new ResponseEntity<>("Password changed successfully", HttpStatus.OK);
     }
 
+    @GetMapping("/get-all-developers")
+    public ResponseEntity<?> getAllDevelopers(@RequestHeader("Authorization") String authHeader) {
+        String jwtToken = util.extractJwtToken(authHeader);
+        return ResponseEntity.ok(userService.getAllDeveloperByCompany(jwtToken));
+    }
+
 }
