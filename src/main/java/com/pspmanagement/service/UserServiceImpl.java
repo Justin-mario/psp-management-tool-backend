@@ -19,6 +19,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -110,23 +111,6 @@ public class UserServiceImpl implements UserService{
 
     }
 
-
-    private void validateRegistration(RegistrationRequestDto requestDto) {
-        try {
-            if (userRepository.existsByUsername(requestDto.getUsername())) {
-                throw new ConflictException(requestDto.getUsername() + " is already taken!");
-            }
-            if (userRepository.existsByEmail(requestDto.getEmail())) {
-                throw new ConflictException(requestDto.getEmail() + " has been registered!");
-            }
-        }
-        catch (ConflictException e) {
-            throw new ConflictException(e.getMessage());
-        }
-
-
-    }
-
     @Override
     public String changePassword(Long userId, ChangePasswordRequest changePasswordRequest) {
         try {
@@ -166,6 +150,36 @@ public class UserServiceImpl implements UserService{
         catch (Exception e) {
             throw new UnauthorizedException("Invalid username or password");
         }
+
+    }
+
+    @Override
+    public List<RegistrationResponseDto> getAllDeveloperByCompany(String jwtToken) {
+        // Extract the admin's username from the token
+        String adminUsername = tokenProvider.getUsernameFromJWT(jwtToken);
+        // Verify if the admin exists and has the right role
+        User admin = userRepository.findByUsername(adminUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
+        String companyName = admin.getCompanyName();
+        Set<User> developers = userRepository.findAllByCompanyName(companyName);
+        developers.removeIf(user -> !user.getRoles().contains("DEVELOPER"));
+        return developers.stream().map(RegistrationResponseDto::new).toList();
+
+    }
+
+    private void validateRegistration(RegistrationRequestDto requestDto) {
+        try {
+            if (userRepository.existsByUsername(requestDto.getUsername())) {
+                throw new ConflictException(requestDto.getUsername() + " is already taken!");
+            }
+            if (userRepository.existsByEmail(requestDto.getEmail())) {
+                throw new ConflictException(requestDto.getEmail() + " has been registered!");
+            }
+        }
+        catch (ConflictException e) {
+            throw new ConflictException(e.getMessage());
+        }
+
 
     }
 }

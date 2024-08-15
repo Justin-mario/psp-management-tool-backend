@@ -1,6 +1,7 @@
 package com.pspmanagement.model.entity;
 
 import com.pspmanagement.dto.requestdto.ProjectRegistrationRequestDto;
+import com.pspmanagement.model.constant.ProjectPhase;
 import com.pspmanagement.model.constant.ProjectStatus;
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -9,12 +10,12 @@ import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
 @Getter
 @Setter
-@Table(name = "projects")
 @NoArgsConstructor
 public class Project {
     @Id
@@ -47,6 +48,16 @@ public class Project {
     @DateTimeFormat(pattern = "dd-MM-yyyy'T'HH:mm:ss")
     private LocalDateTime EndDate;
 
+
+    @OneToMany(mappedBy = "project",  fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<ProjectTimeLog> timeLogs;
+
+    @Transient
+    private int duration;
+
+    @Enumerated(EnumType.STRING)
+    private ProjectPhase projecPhase;
+
     public Project(ProjectRegistrationRequestDto requestDto) {
         this.projectName = requestDto.getProjectName();
         this.projectDescription = requestDto.getProjectDescription();
@@ -55,18 +66,37 @@ public class Project {
         this.startDate = LocalDateTime.now();
     }
 
+    public String calculateDuration() {
+        long totalMinutes = 0;
+
+        for (ProjectTimeLog timeLog : this.timeLogs) {
+            LocalDateTime startTime = timeLog.getStartTime();
+            LocalDateTime endTime = timeLog.getEndTime();
+            if (endTime != null) {
+                totalMinutes += java.time.temporal.ChronoUnit.MINUTES.between(startTime, endTime);
+            }
+        }
+
+        if (totalMinutes < 60) {
+            return totalMinutes + " minutes";
+        } else {
+            long hours = totalMinutes / 60;
+            long remainingMinutes = totalMinutes % 60;
+            return hours + " hours " + remainingMinutes + " minutes";
+        }
+    }
 
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Project project = (Project) o;
-        return projectId == project.projectId && Objects.equals(projectName, project.projectName) && Objects.equals(projectDescription, project.projectDescription) && Objects.equals(projectAdmin, project.projectAdmin) && Objects.equals(projectDeveloper, project.projectDeveloper) && Objects.equals(programmingLanguage, project.programmingLanguage) && projectStatus == project.projectStatus && Objects.equals(startDate, project.startDate) && Objects.equals(EndDate, project.EndDate);
+        return duration == project.duration && Objects.equals(projectId, project.projectId) && Objects.equals(projectName, project.projectName) && Objects.equals(projectDescription, project.projectDescription) && Objects.equals(projectAdmin, project.projectAdmin) && Objects.equals(projectDeveloper, project.projectDeveloper) && Objects.equals(programmingLanguage, project.programmingLanguage) && projectStatus == project.projectStatus && Objects.equals(startDate, project.startDate) && Objects.equals(EndDate, project.EndDate) && Objects.equals(timeLogs, project.timeLogs) && projecPhase == project.projecPhase;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(projectId, projectName, projectDescription, projectAdmin, projectDeveloper, programmingLanguage, projectStatus, startDate, EndDate);
+        return Objects.hash(projectId, projectName, projectDescription, projectAdmin, projectDeveloper, programmingLanguage, projectStatus, startDate, EndDate, timeLogs, duration, projecPhase);
     }
 
     @Override
@@ -79,8 +109,11 @@ public class Project {
                 ", projectDeveloper=" + projectDeveloper +
                 ", programmingLanguage='" + programmingLanguage + '\'' +
                 ", projectStatus=" + projectStatus +
-                ", StartDAte=" + startDate +
+                ", startDate=" + startDate +
                 ", EndDate=" + EndDate +
+                ", timeLogs=" + timeLogs +
+                ", duration=" + duration +
+                ", projecPhase=" + projecPhase +
                 '}';
     }
 }
