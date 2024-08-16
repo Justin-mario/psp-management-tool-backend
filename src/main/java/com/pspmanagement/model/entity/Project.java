@@ -68,15 +68,15 @@ public class Project {
 
     public String calculateDuration() {
         long totalMinutes = 0;
-
-        for (ProjectTimeLog timeLog : this.timeLogs) {
-            LocalDateTime startTime = timeLog.getStartTime();
-            LocalDateTime endTime = timeLog.getEndTime();
-            if (endTime != null) {
-                totalMinutes += java.time.temporal.ChronoUnit.MINUTES.between(startTime, endTime);
+        if(this.timeLogs != null) {
+            for (ProjectTimeLog timeLog : this.timeLogs) {
+                LocalDateTime startTime = timeLog.getStartTime();
+                LocalDateTime endTime = timeLog.getEndTime();
+                if (endTime != null) {
+                    totalMinutes += java.time.temporal.ChronoUnit.MINUTES.between(startTime, endTime);
+                }
             }
         }
-
         if (totalMinutes < 60) {
             return totalMinutes + " minutes";
         } else {

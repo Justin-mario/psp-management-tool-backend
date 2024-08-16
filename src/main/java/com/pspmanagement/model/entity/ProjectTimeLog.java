@@ -23,5 +23,5 @@ public class ProjectTimeLog {
     private Project project;
     private LocalDateTime startTime;
     private LocalDateTime endTime;
-
+//    private String description;
 }
