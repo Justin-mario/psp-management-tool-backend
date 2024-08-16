@@ -1,7 +1,6 @@
 package com.pspmanagement.service;
 
 import com.pspmanagement.exception.ResourceNotFoundException;
-import com.pspmanagement.model.constant.ProjectPhase;
 import com.pspmanagement.model.entity.Project;
 import com.pspmanagement.model.entity.ProjectTimeLog;
 import com.pspmanagement.repository.ProjectRepository;
@@ -21,6 +20,7 @@ public class ProjectTimeLogServiceImpl implements ProjectTimeLogService{
     }
 
     @Override
+    @Transactional
     public Boolean startProject(Long projectId) {
             Project project = validateProject(projectId);
             ProjectTimeLog projectTimeLog = new ProjectTimeLog();
@@ -36,9 +36,10 @@ public class ProjectTimeLogServiceImpl implements ProjectTimeLogService{
     @Transactional
     public Boolean endProject(Long projectId) {
         Project project = validateProject(projectId);
-        ProjectTimeLog projectTimeLogId = projectTimeLogRepository.findByProject(project);
-        projectTimeLogId.setEndTime(LocalDateTime.now());
-        getProjectDuration(projectId);
+        ProjectTimeLog timeLog = projectTimeLogRepository.findTopByProjectAndEndTimeIsNullOrderByStartTimeDesc(project)
+                .orElseThrow(() -> new IllegalStateException("No active work session found for project with id: " + projectId));
+        timeLog.setEndTime(LocalDateTime.now());
+        projectTimeLogRepository.save(timeLog);
         return true;
     }
 
