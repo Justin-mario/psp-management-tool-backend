@@ -6,6 +6,8 @@ import com.pspmanagement.model.entity.Project;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Arrays;
+
 @Getter
 @Setter
 public class ProjectResponseDto {
@@ -31,6 +33,10 @@ public class ProjectResponseDto {
 
     private String duration;
 
+    private DefectResponseDto[] defects;
+
+    private String companyName;
+
 
 
     public ProjectResponseDto(Project project) {
@@ -45,6 +51,7 @@ public class ProjectResponseDto {
         this.projectAdmin = project.getProjectAdmin().getUsername();
         this.phase = project.getProjecPhase();
         this.duration = project.calculateDuration();
+        this.companyName = project.getProjectAdmin().getCompanyName();
     }
 
     @Override
@@ -61,6 +68,8 @@ public class ProjectResponseDto {
                 ", projectAdmin='" + projectAdmin + '\'' +
                 ", projecPhase=" + phase +
                 ", duration=" + duration +
+                ", defects=" + Arrays.toString(defects) +
+                ", companyName='" + companyName + '\'' +
                 '}';
     }
 }

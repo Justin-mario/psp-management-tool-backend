@@ -58,6 +58,9 @@ public class Project {
     @Enumerated(EnumType.STRING)
     private ProjectPhase projecPhase;
 
+    @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<Defect> defects;
+
     public Project(ProjectRegistrationRequestDto requestDto) {
         this.projectName = requestDto.getProjectName();
         this.projectDescription = requestDto.getProjectDescription();
