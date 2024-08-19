@@ -36,29 +36,31 @@ public class ProjectServiceImpl implements ProjectService{
         this.tokenProvider = tokenProvider;
     }
 
-    @Override
-    public ProjectResponseDto addProject(Long adminId, ProjectRegistrationRequestDto projectRegistrationRequestDto) {
-        validateProjectRequest(adminId, projectRegistrationRequestDto);
-        try {
-            Project project = new Project();
-            project.setProjectName(projectRegistrationRequestDto.getProjectName());
-            User admin = findAdminById(adminId);
-            User developer = findDeveloperByUsername(projectRegistrationRequestDto.getProjectDeveloper());
-            project.setProjectDeveloper(developer);
-            project.setProjectAdmin(admin);
-            project.setProgrammingLanguage(projectRegistrationRequestDto.getProgrammingLanguage());
-            project.setProjectDescription(projectRegistrationRequestDto.getProjectDescription());
-            project.setProjectStatus(ProjectStatus.IN_PROGRESS);
-            project.setStartDate(LocalDateTime.now());
-            project.setProjecPhase(projectRegistrationRequestDto.getProjectPhase());
-            projectRepository.save(project);
 
+    @Override
+    public ProjectResponseDto addProject(String jwtToken, ProjectRegistrationRequestDto projectRegistrationRequestDto) {
+        if (!tokenProvider.validateToken(jwtToken)) {
+            throw new UnauthorizedException("Invalid or expired token");
+        }
+        String adminUsername = tokenProvider.getUsernameFromJWT(jwtToken);
+        User admin = userRepository.findByUsername(adminUsername)
+                .orElseThrow(() -> new ResourceNotFoundException("Admin not found"));
+
+        User developer = findDeveloperByUsername(projectRegistrationRequestDto.getProjectDeveloper());
+
+        Project project = new Project();
+        project.setProjectName(projectRegistrationRequestDto.getProjectName());
+        project.setProjectDeveloper(developer);
+        project.setProjectAdmin(admin);
+        project.setProgrammingLanguage(projectRegistrationRequestDto.getProgrammingLanguage());
+        project.setProjectDescription(projectRegistrationRequestDto.getProjectDescription());
+        project.setProjectStatus(ProjectStatus.IN_PROGRESS);
+        project.setStartDate(LocalDateTime.now());
+        project.setProjectPhase(projectRegistrationRequestDto.getProjectPhase());
+
+        projectRepository.save(project);
         return new ProjectResponseDto(project);
-        }
-        catch (Exception e){
-            throw new RuntimeException(e);
-        }
-        }
+    }
 
     @Override
     @Transactional

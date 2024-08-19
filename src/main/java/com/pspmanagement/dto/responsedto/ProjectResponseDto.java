@@ -6,7 +6,9 @@ import com.pspmanagement.model.entity.Project;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -33,7 +35,7 @@ public class ProjectResponseDto {
 
     private String duration;
 
-    private DefectResponseDto[] defects;
+    private List<DefectResponseDto> defects;
 
     private String companyName;
 
@@ -49,10 +51,22 @@ public class ProjectResponseDto {
         this.startDate = String.valueOf(project.getStartDate());
         this.endDate = String.valueOf(project.getEndDate());
         this.projectAdmin = project.getProjectAdmin().getUsername();
-        this.phase = project.getProjecPhase();
+        this.phase = project.getProjectPhase();
         this.duration = project.calculateDuration();
         this.companyName = project.getProjectAdmin().getCompanyName();
+//        this.defects = project.getDefects().stream()
+//                .map(DefectResponseDto::new)
+//                .collect(Collectors.toList());
+
+        this.defects = project.getDefects() != null
+                ? project.getDefects().stream().map(DefectResponseDto::new).collect(Collectors.toList())
+                : new ArrayList<>();
+
     }
+
+
+
+
 
     @Override
     public String toString() {
@@ -68,7 +82,7 @@ public class ProjectResponseDto {
                 ", projectAdmin='" + projectAdmin + '\'' +
                 ", projecPhase=" + phase +
                 ", duration=" + duration +
-                ", defects=" + Arrays.toString(defects) +
+                ", defects=" + defects +
                 ", companyName='" + companyName + '\'' +
                 '}';
     }

@@ -21,9 +21,11 @@ public class ProjectController {
         this.util = util;
     }
 
-    @PostMapping("/add/{adminId}")
-    public ResponseEntity<ProjectResponseDto> addProject(@Valid @PathVariable Long adminId,@RequestBody ProjectRegistrationRequestDto projectRegistrationRequestDto) {
-        return new ResponseEntity<>(projectService.addProject(adminId, projectRegistrationRequestDto), HttpStatus.CREATED);
+    @PostMapping("/add")
+    public ResponseEntity<ProjectResponseDto> addProject(@Valid @RequestBody ProjectRegistrationRequestDto projectRegistrationRequestDto, @RequestHeader("Authorization") String authHeader) {
+        // Extract the JWT token from the Authorization header
+        String jwtToken = util.extractJwtToken(authHeader);
+        return new ResponseEntity<>(projectService.addProject(jwtToken, projectRegistrationRequestDto), HttpStatus.CREATED);
     }
     @PutMapping("/update/{projectId}")
     public ResponseEntity<?> reassignProject(@Valid  @PathVariable Long projectId, @RequestBody ProjectRegistrationRequestDto projectRegistrationRequestDto, @RequestHeader("Authorization") String authHeader) {

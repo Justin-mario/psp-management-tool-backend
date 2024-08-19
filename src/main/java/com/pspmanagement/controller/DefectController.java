@@ -25,7 +25,7 @@ public class DefectController {
         return new ResponseEntity<>(defectService.createDefect(projectId, defectRequestDto), HttpStatus.CREATED);
     }
     @PutMapping("/change-status/{defectId}")
-    public ResponseEntity<Boolean> changeDefectStatus(@PathVariable Long defectId, @RequestParam String newStatus) {
+    public ResponseEntity<Boolean> changeDefectStatus(@PathVariable Long defectId, @RequestBody DefectRequestDto newStatus) {
         return new ResponseEntity<> (defectService.changeDefectStatus(defectId, newStatus),HttpStatus.OK);
     }
     @PutMapping("/set-fix-time/{defectId}")
@@ -33,7 +33,7 @@ public class DefectController {
         return new ResponseEntity<> (defectService.setDefectFixTime(defectId),HttpStatus.OK);
     }
     @GetMapping("/project/{projectId}")
-    public ResponseEntity<List<Defect>>getDefectsByProjectId(@PathVariable Long projectId) {
+    public ResponseEntity<?>getDefectsByProjectId(@PathVariable Long projectId) {
         return new ResponseEntity<>(defectService.getDefectsByProjectId(projectId),HttpStatus.OK);
     }
 

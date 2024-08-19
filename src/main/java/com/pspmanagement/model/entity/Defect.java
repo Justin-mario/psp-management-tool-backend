@@ -23,12 +23,16 @@ public class Defect {
 
     private String description;
 
+    @Enumerated(EnumType.STRING)
     private DefectStatus defectStatus;
 
+    @Enumerated(EnumType.STRING)
     private DefectType defectType;
 
+    @Enumerated(EnumType.STRING)
     private ProjectPhase injectedPhase;
 
+    @Enumerated(EnumType.STRING)
     private ProjectPhase removedPhase;
 
     private LocalDateTime fixTime;

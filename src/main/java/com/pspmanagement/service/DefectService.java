@@ -1,7 +1,7 @@
 package com.pspmanagement.service;
 
 import com.pspmanagement.dto.requestdto.DefectRequestDto;
-import com.pspmanagement.model.entity.Defect;
+import com.pspmanagement.dto.responsedto.DefectResponseDto;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -9,8 +9,7 @@ import java.util.List;
 @Service
 public interface DefectService {
     String createDefect(Long projectId, DefectRequestDto defectRequestDto);
-    Boolean changeDefectStatus(Long defectId, String newStatus);
+    Boolean changeDefectStatus(Long defectId, DefectRequestDto newStatus);
     Boolean setDefectFixTime(Long defectId);
-    List<Defect> getDefectsByProjectId(Long projectId);
-
+    List<DefectResponseDto> getDefectsByProjectId(Long projectId);
 }
