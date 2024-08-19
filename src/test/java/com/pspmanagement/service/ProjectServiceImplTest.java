@@ -4,9 +4,9 @@ import com.pspmanagement.config.JwtTokenProvider;
 import com.pspmanagement.dto.requestdto.ProjectRegistrationRequestDto;
 import com.pspmanagement.dto.requestdto.ProjectRequestDto;
 import com.pspmanagement.dto.responsedto.ProjectResponseDto;
-import com.pspmanagement.exception.ForbiddenException;
 import com.pspmanagement.exception.ResourceNotFoundException;
 import com.pspmanagement.exception.UnauthorizedException;
+import com.pspmanagement.model.constant.ProjectPhase;
 import com.pspmanagement.model.constant.ProjectStatus;
 import com.pspmanagement.model.entity.Project;
 import com.pspmanagement.model.entity.User;
@@ -44,85 +44,88 @@ class ProjectServiceImplTest {
             projectService = new ProjectServiceImpl(projectRepository, userRepository, jwtTokenProvider);
         }
 
-        @Test
-        void addProject_Success() {
-            // Arrange
-            ProjectRegistrationRequestDto requestDto = new ProjectRegistrationRequestDto();
-            Long adminId = 1L;
-            requestDto.setProjectName("Test Project");
-            requestDto.setProjectDeveloper("developer");
-            requestDto.setProgrammingLanguage("Java");
-            requestDto.setProjectDescription("Test Description");
+    @Test
+    void addProject_Success() {
+        // Arrange
+        ProjectRegistrationRequestDto requestDto = new ProjectRegistrationRequestDto();
+        String jwtToken = "validToken";
+        requestDto.setProjectName("Test Project");
+        requestDto.setProjectDeveloper("developer");
+        requestDto.setProgrammingLanguage("Java");
+        requestDto.setProjectDescription("Test Description");
+        requestDto.setProjectPhase(ProjectPhase.valueOf("PLANNING"));
 
-            User admin = new User();
-            admin.setId(1L);
-            admin.setCompanyName("Test Company");
+        User admin = new User();
+        admin.setUsername("admin");
+        admin.setCompanyName("Test Company");
 
-            User developer = new User();
-            developer.setUsername("developer");
-            developer.setCompanyName("Test Company");
+        User developer = new User();
+        developer.setUsername("developer");
+        developer.setCompanyName("Test Company");
 
-            when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
-            when(userRepository.findByUsername("developer")).thenReturn(Optional.of(developer));
-            when(projectRepository.save(any(Project.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(jwtTokenProvider.validateToken(jwtToken)).thenReturn(true);
+        when(jwtTokenProvider.getUsernameFromJWT(jwtToken)).thenReturn("admin");
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(userRepository.findByUsername("developer")).thenReturn(Optional.of(developer));
+        when(projectRepository.save(any(Project.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
-            // Act
-            ProjectResponseDto responseDto = projectService.addProject(adminId,requestDto);
 
-            // Assert
-            assertNotNull(responseDto);
-            assertEquals("Test Project", responseDto.getProjectName());
-            assertEquals(ProjectStatus.IN_PROGRESS, responseDto.getProjectStatus());
-            verify(projectRepository, times(1)).save(any(Project.class));
-        }
+        // Act
+        ProjectResponseDto responseDto = projectService.addProject(jwtToken, requestDto);
 
-        @Test
-        void addProject_AdminNotFound() {
-            // Arrange
-            ProjectRegistrationRequestDto requestDto = new ProjectRegistrationRequestDto();
-            Long adminId = 1L;
+        // Assert
+        assertNotNull(responseDto);
+        assertEquals("Test Project", responseDto.getProjectName());
+        assertEquals(ProjectStatus.IN_PROGRESS, responseDto.getProjectStatus());
+        assertTrue(responseDto.getDefects().isEmpty());
+        verify(projectRepository, times(1)).save(any(Project.class));
 
-            when(userRepository.findById(1L)).thenReturn(Optional.empty());
-            // Act & Assert
-            assertThrows(ResourceNotFoundException.class, () -> projectService.addProject(adminId,requestDto));
-        }
+    }
 
-        @Test
-        void addProject_DeveloperNotFound() {
-            // Arrange
-            ProjectRegistrationRequestDto requestDto = new ProjectRegistrationRequestDto();
-            Long adminId = 1L;
-            requestDto.setProjectDeveloper("developer");
+    @Test
+    void addProject_InvalidToken() {
+        // Arrange
+        ProjectRegistrationRequestDto requestDto = new ProjectRegistrationRequestDto();
+        String jwtToken = "invalidToken";
 
-            User admin = new User();
-            admin.setId(1L);
+        when(jwtTokenProvider.validateToken(jwtToken)).thenReturn(false);
 
-            when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
-            when(userRepository.findByUsername("developer")).thenReturn(Optional.empty());
-            // Act & Assert
-            assertThrows(ResourceNotFoundException.class, () -> projectService.addProject(adminId,requestDto));
-        }
+        // Act & Assert
+        assertThrows(UnauthorizedException.class, () -> projectService.addProject(jwtToken, requestDto));
+    }
 
-        @Test
-        void addProject_ForbiddenCompanyMismatch() {
-            // Arrange
-            ProjectRegistrationRequestDto requestDto = new ProjectRegistrationRequestDto();
-            Long adminId = 1L;
-            requestDto.setProjectDeveloper("developer");
+    @Test
+    void addProject_AdminNotFound() {
+        // Arrange
+        ProjectRegistrationRequestDto requestDto = new ProjectRegistrationRequestDto();
+        String jwtToken = "validToken";
 
-            User admin = new User();
-            admin.setId(1L);
-            admin.setCompanyName("Company A");
+        when(jwtTokenProvider.validateToken(jwtToken)).thenReturn(true);
+        when(jwtTokenProvider.getUsernameFromJWT(jwtToken)).thenReturn("admin");
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.empty());
 
-            User developer = new User();
-            developer.setUsername("developer");
-            developer.setCompanyName("Company B");
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> projectService.addProject(jwtToken, requestDto));
+    }
 
-            when(userRepository.findById(1L)).thenReturn(Optional.of(admin));
-            when(userRepository.findByUsername("developer")).thenReturn(Optional.of(developer));
-            // Act & Assert
-            assertThrows(ForbiddenException.class, () -> projectService.addProject(adminId,requestDto));
-        }
+    @Test
+    void addProject_DeveloperNotFound() {
+        // Arrange
+        ProjectRegistrationRequestDto requestDto = new ProjectRegistrationRequestDto();
+        String jwtToken = "validToken";
+        requestDto.setProjectDeveloper("developer");
+
+        User admin = new User();
+        admin.setUsername("admin");
+
+        when(jwtTokenProvider.validateToken(jwtToken)).thenReturn(true);
+        when(jwtTokenProvider.getUsernameFromJWT(jwtToken)).thenReturn("admin");
+        when(userRepository.findByUsername("admin")).thenReturn(Optional.of(admin));
+        when(userRepository.findByUsername("developer")).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThrows(ResourceNotFoundException.class, () -> projectService.addProject(jwtToken, requestDto));
+    }
 
     @Test
     void reassignProject_Success() {

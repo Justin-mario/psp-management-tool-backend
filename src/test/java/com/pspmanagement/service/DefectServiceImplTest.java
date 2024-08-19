@@ -2,6 +2,7 @@ package com.pspmanagement.service;
 
 import static org.junit.jupiter.api.Assertions.*;
 import com.pspmanagement.dto.requestdto.DefectRequestDto;
+import com.pspmanagement.dto.responsedto.DefectResponseDto;
 import com.pspmanagement.exception.ResourceNotFoundException;
 import com.pspmanagement.model.constant.DefectStatus;
 import com.pspmanagement.model.constant.DefectType;
@@ -18,6 +19,8 @@ import org.mockito.MockitoAnnotations;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+
 import static org.mockito.Mockito.*;
 
 class DefectServiceImplTest {
@@ -70,14 +73,15 @@ class DefectServiceImplTest {
         @Test
         void changeDefectStatus_Success() {
             Long defectId = 1L;
-            String newStatus = "FIXED";
+            DefectStatus newStatus = DefectStatus.FIXED;
             Defect defect = new Defect();
             defect.setDefectId(defectId);
-
+            DefectRequestDto defectRequestDto = new DefectRequestDto();
+            defectRequestDto.setDefectStatus(newStatus);
             when(defectRepository.findById(defectId)).thenReturn(Optional.of(defect));
             when(defectRepository.save(any(Defect.class))).thenReturn(defect);
 
-            Boolean result = defectService.changeDefectStatus(defectId, newStatus);
+            Boolean result = defectService.changeDefectStatus(defectId, defectRequestDto);
 
             assertTrue(result);
             assertEquals(DefectStatus.FIXED, defect.getDefectStatus());
@@ -87,11 +91,13 @@ class DefectServiceImplTest {
         @Test
         void changeDefectStatus_DefectNotFound() {
             Long defectId = 1L;
-            String newStatus = "RESOLVED";
+            String newStatus = "FIXED";
+            DefectRequestDto defectRequestDto = new DefectRequestDto();
+            defectRequestDto.setDefectStatus(DefectStatus.valueOf(newStatus));
 
             when(defectRepository.findById(defectId)).thenReturn(Optional.empty());
 
-            assertThrows(ResourceNotFoundException.class, () -> defectService.changeDefectStatus(defectId, newStatus));
+            assertThrows(ResourceNotFoundException.class, () -> defectService.changeDefectStatus(defectId, defectRequestDto));
         }
 
         @Test
@@ -119,22 +125,26 @@ class DefectServiceImplTest {
             assertThrows(ResourceNotFoundException.class, () -> defectService.setDefectFixTime(defectId));
         }
 
-        @Test
-        void getDefectsByProjectId_Success() {
-            Long projectId = 1L;
-            Project project = new Project();
-            project.setProjectId(projectId);
+    @Test
+    void getDefectsByProjectId_Success() {
+        Long projectId = 1L;
+        Project project = new Project();
+        project.setProjectId(projectId);
 
-            List<Defect> defects = Arrays.asList(new Defect(), new Defect());
+        List<Defect> defects = Arrays.asList(new Defect(), new Defect());
+        project.setDefects(defects);
 
-            when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
-            when(defectRepository.findByProject(project)).thenReturn(defects);
+        when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
 
-            List<Defect> result = defectService.getDefectsByProjectId(projectId);
+        List<DefectResponseDto> expectedResult = defects.stream()
+                .map(DefectResponseDto::new)
+                .collect(Collectors.toList());
 
-            assertEquals(defects, result);
-            verify(defectRepository, times(1)).findByProject(project);
-        }
+        List<DefectResponseDto> result = defectService.getDefectsByProjectId(projectId);
+
+        assertEquals(expectedResult, result);
+        verify(projectRepository, times(1)).findById(projectId);
+    }
 
         @Test
         void getDefectsByProjectId_ProjectNotFound() {

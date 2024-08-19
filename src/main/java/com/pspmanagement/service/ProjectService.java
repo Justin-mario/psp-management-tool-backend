@@ -9,7 +9,7 @@ import java.util.Map;
 
 
 public interface ProjectService {
-    ProjectResponseDto addProject(Long adminId, ProjectRegistrationRequestDto projectRegistrationRequestDto);
+    ProjectResponseDto addProject(String jwtToken, ProjectRegistrationRequestDto projectRegistrationRequestDto);
     String reassignProject(Long projectId, ProjectRegistrationRequestDto requestDto, String jwtToken);
     Map<String, String> completeProject(Long projectId);
     Map<String, String> archiveProject(Long projectId);

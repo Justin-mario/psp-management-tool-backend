@@ -10,6 +10,7 @@ import lombok.Setter;
 import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -56,10 +57,10 @@ public class Project {
     private int duration;
 
     @Enumerated(EnumType.STRING)
-    private ProjectPhase projecPhase;
+    private ProjectPhase projectPhase;
 
     @OneToMany(mappedBy = "project", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Defect> defects;
+    private List<Defect> defects  = new ArrayList<>(); ;
 
     public Project(ProjectRegistrationRequestDto requestDto) {
         this.projectName = requestDto.getProjectName();
@@ -94,12 +95,12 @@ public class Project {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Project project = (Project) o;
-        return duration == project.duration && Objects.equals(projectId, project.projectId) && Objects.equals(projectName, project.projectName) && Objects.equals(projectDescription, project.projectDescription) && Objects.equals(projectAdmin, project.projectAdmin) && Objects.equals(projectDeveloper, project.projectDeveloper) && Objects.equals(programmingLanguage, project.programmingLanguage) && projectStatus == project.projectStatus && Objects.equals(startDate, project.startDate) && Objects.equals(EndDate, project.EndDate) && Objects.equals(timeLogs, project.timeLogs) && projecPhase == project.projecPhase;
+        return duration == project.duration && Objects.equals(projectId, project.projectId) && Objects.equals(projectName, project.projectName) && Objects.equals(projectDescription, project.projectDescription) && Objects.equals(projectAdmin, project.projectAdmin) && Objects.equals(projectDeveloper, project.projectDeveloper) && Objects.equals(programmingLanguage, project.programmingLanguage) && projectStatus == project.projectStatus && Objects.equals(startDate, project.startDate) && Objects.equals(EndDate, project.EndDate) && Objects.equals(timeLogs, project.timeLogs) && projectPhase == project.projectPhase;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(projectId, projectName, projectDescription, projectAdmin, projectDeveloper, programmingLanguage, projectStatus, startDate, EndDate, timeLogs, duration, projecPhase);
+        return Objects.hash(projectId, projectName, projectDescription, projectAdmin, projectDeveloper, programmingLanguage, projectStatus, startDate, EndDate, timeLogs, duration, projectPhase);
     }
 
     @Override
@@ -116,7 +117,7 @@ public class Project {
                 ", EndDate=" + EndDate +
                 ", timeLogs=" + timeLogs +
                 ", duration=" + duration +
-                ", projecPhase=" + projecPhase +
+                ", projecPhase=" + projectPhase +
                 '}';
     }
 }
